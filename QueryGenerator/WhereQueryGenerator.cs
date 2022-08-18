@@ -7,49 +7,47 @@ namespace QueryGenerator
 {
     public class WhereQueryGenerator : IWhereQueryGenerator
     {
-        public DatabaseType DatabaseType { get; init; }
-        public string TableName { get; init; }
-
-        public Query GenerateQuery(Constraint constraint)
+        public Query GenerateQuery(LogicalConstraint constraint, Query query)
         {
-            var finalQuery = new Query(TableName);
-            return finalQuery.Where(WhereConstraint(finalQuery, constraint));
+            return query.Where(LogicalConstraint(constraint));
         }
 
-        private Func<Query, Query> WhereConstraint(Query query, Constraint constraint)
+        private Func<Query, Query> LogicalConstraint(LogicalConstraint logicalConstraint)
         {
-            if (constraint is FieldConstraint fieldConstraint)
+            return logicalConstraint.LogicalOperationType switch
             {
-                return GetQueryFunctionFromFieldConstraint(fieldConstraint);
+                LogicalOperationType.And => q => AndConstraint(q, logicalConstraint),
+                LogicalOperationType.Or => q => OrConstraint(q, logicalConstraint),
+                _ => throw new NotSupportedException()
+            };
+        }
+
+        private Query OrConstraint(Query q, LogicalConstraint logicalConstraint)
+        {
+            foreach (var inputConstraint in logicalConstraint.FieldConstraints)
+            {
+                q.OrWhere(GetQueryFunctionFromFieldConstraint(inputConstraint));
+            }
+            foreach (var inputConstraint in logicalConstraint.LogicalConstraints)
+            {
+                q.OrWhere(LogicalConstraint(inputConstraint));
             }
 
-            if (constraint is LogicalConstraint logicalConstraint)
+            return q;
+        }
+
+        private Query AndConstraint(Query q, LogicalConstraint logicalConstraint)
+        {
+            foreach (var inputConstraint in logicalConstraint.FieldConstraints)
             {
-                if (logicalConstraint.LogicalOperationType == LogicalOperationType.And)
-                {
-                    return q =>
-                    {
-                        foreach (var inputConstraint in logicalConstraint.InputConstraints)
-                        {
-                            q.Where(WhereConstraint(q, inputConstraint));
-                        }
-
-                        return q;
-                    };
-                }
-
-                return q =>
-                {
-                    foreach (var inputConstraint in logicalConstraint.InputConstraints)
-                    {
-                        q.OrWhere(WhereConstraint(q, inputConstraint));
-                    }
-
-                    return q;
-                };
+                q.Where(GetQueryFunctionFromFieldConstraint(inputConstraint));
+            }
+            foreach (var inputConstraint in logicalConstraint.LogicalConstraints)
+            {
+                q.Where(LogicalConstraint(inputConstraint));
             }
 
-            return q => q;
+            return q;
         }
 
         private Func<Query, Query> GetQueryFunctionFromFieldConstraint(FieldConstraint fieldConstraint)
@@ -66,19 +64,6 @@ namespace QueryGenerator
                 SecondOperandType.ValuesList => q => q.WhereIn(fieldConstraint.FirstOperandColumnName,
                     secondOperand.ValuesList),
                 _ => q => q
-            };
-        }
-
-        private Compiler GetCompiler()
-        {
-            return DatabaseType switch
-            {
-                DatabaseType.SqlServer => new SqlServerCompiler(),
-                DatabaseType.Postgres => new PostgresCompiler(),
-                DatabaseType.Oracle => new OracleCompiler(),
-                DatabaseType.Sqlite => new SqliteCompiler(),
-                DatabaseType.MySql => new MySqlCompiler(),
-                _ => throw new Exception()
             };
         }
     }

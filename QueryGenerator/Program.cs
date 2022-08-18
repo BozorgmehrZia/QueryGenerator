@@ -14,7 +14,7 @@ class Program
                     .OrWhere("Age", "<", 27)))
             .OrWhere(q => q.Where("Location", "=", "Mumbai")
                 .Where("Age", ">", 25));
-        var sql = new WhereQueryGenerator().GenerateQuery(CreateTestConstraint());
+        var sql = new WhereQueryGenerator().GenerateQuery(CreateTestConstraint(), new Query("Users"));
     }
 
     private static void TestCompilers()
@@ -36,18 +36,19 @@ class Program
         var clickHouse = new ClickHouseCompiler().Compile(chQuery);
     }
     
-    private static Constraint CreateTestConstraint()
+    private static LogicalConstraint CreateTestConstraint()
     {
         return new LogicalConstraint()
         {
             LogicalOperationType = LogicalOperationType.Or,
-            InputConstraints = new()
+            LogicalConstraints = new()
             {
                 new LogicalConstraint()
                 {
                     LogicalOperationType = LogicalOperationType.And,
-                    InputConstraints = new()
+                    FieldConstraints = new()
                     {
+
                         new FieldConstraint()
                         {
                             FirstOperandColumnName = "Location",
@@ -58,10 +59,13 @@ class Program
                                 Value = "Bhuj"
                             }
                         },
+                    },
+                    LogicalConstraints = new()
+                    {
                         new LogicalConstraint()
                         {
                             LogicalOperationType = LogicalOperationType.Or,
-                            InputConstraints = new()
+                            FieldConstraints = new()
                             {
                                 new FieldConstraint()
                                 {
@@ -90,7 +94,7 @@ class Program
                 new LogicalConstraint()
                 {
                     LogicalOperationType = LogicalOperationType.And,
-                    InputConstraints = new()
+                    FieldConstraints = new()
                     {
                         new FieldConstraint()
                         {
