@@ -19,55 +19,22 @@ public static class QueryExtensions
 
     private static string ConvertSystemDataTypeToPostgresType(Type type)
     {
-        if (type == typeof(bool))
+        var dictionary = new Dictionary<Type, string>
         {
-            return "boolean";
-        }
-        if (type == typeof(short))
-        {
-            return "smallint";
-        }
-        if (type == typeof(int))
-        {
-            return "integer";
-        }
-        if (type == typeof(long))
-        {
-            return "bigint";
-        }
-        if (type == typeof(float))
-        {
-            return "real";
-        }
-        if (type == typeof(double))
-        {
-            return "double precision";
-        }
-        if (type == typeof(decimal))
-        {
-            return "numeric";
-        }
-        if (type == typeof(string))
-        {
-            return "text";
-        }
-        if (type == typeof(Guid))
-        {
-            return "uuid";
-        }
-        if (type == typeof(byte[]))
-        {
-            return "bytea";
-        }
-        if (type == typeof(DateTime))
-        {
-            return "timestamp without time zone";
-        }
-        if (type == typeof(TimeSpan))
-        {
-            return "time without time zone";
-        }
+            { typeof(bool), "boolean" },
+            { typeof(short), "smallint" },
+            { typeof(int), "integer" },
+            { typeof(long), "bigint" },
+            { typeof(float), "real" },
+            { typeof(double), "double precision" },
+            { typeof(decimal), "numeric" },
+            { typeof(string), "text" },
+            { typeof(Guid), "uuid" },
+            { typeof(byte[]), "bytea" },
+            { typeof(DateTime), "timestamp without time zone" },
+            { typeof(TimeSpan), "time without time zone" }
+        };
 
-        return type.ToString();
+        return dictionary.TryGetValue(type, out var typeString) ? typeString : type.ToString();
     }
 }

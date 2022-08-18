@@ -1,5 +1,6 @@
-﻿using QueryGenerator.Enums;
-using QueryGenerator.Models;
+﻿using QueryGenerator.Constraints;
+using QueryGenerator.Enums;
+using SqlKata;
 
 namespace QueryGenerator
 {
@@ -7,6 +8,6 @@ namespace QueryGenerator
 	{
 		public DatabaseType DatabaseType { get; init; }
 		public string TableName { get; init; }
-		string GenerateQuery(List<WhereClauseModel> whereClauseModels);
+		Query GenerateQuery(Constraint constraint);
 	}
 }
